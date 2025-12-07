@@ -13,6 +13,8 @@ def start(message):
     if database.check_user(user_id):
         bot.send_message(user_id, 'Добро пожаловать!',
                          reply_markup=telebot.types.ReplyKeyboardRemove())
+        bot.send_message(user_id, 'Выберите пункт меню:',
+                         reply_markup=buttons.main_menu(database.get_pr_buttons()))
     else:
         bot.send_message(user_id, 'Привет! Давай начнем регистрацию, напиши свое имя',
                          reply_markup=telebot.types.ReplyKeyboardRemove())
@@ -43,6 +45,8 @@ def get_num(message, user_name):
         database.register(user_id, user_name, user_num)
         bot.send_message(user_id, 'Регистрация прошла успешно!',
                          reply_markup=telebot.types.ReplyKeyboardRemove())
+        bot.send_message(user_id, 'Выберите пункт меню:',
+                         reply_markup=buttons.main_menu(database.get_pr_buttons()))
     else:
         bot.send_message(user_id, 'Номер некорректный. Отправь по кнопке, ковбой)')
         # Возвращение на этап получения номера
