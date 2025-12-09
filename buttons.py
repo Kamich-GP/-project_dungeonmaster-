@@ -23,3 +23,46 @@ def main_menu(products):
     kb.add(*all_pr)
     kb.row(cart)
     return kb
+
+# Кнопки выбора кол-ва товара
+def choose_count_buttons(stock, amount=1, plus_or_minus=''):
+    # Создаем пространство
+    kb = types.InlineKeyboardMarkup(row_width=3)
+    # Создаем сами кнопки
+    plus = types.InlineKeyboardButton(text='+', callback_data='increment')
+    minus = types.InlineKeyboardButton(text='-', callback_data='decrement')
+    count = types.InlineKeyboardButton(text=str(amount), callback_data=str(amount))
+    back = types.InlineKeyboardButton(text='Назад🔙', callback_data='back')
+    to_cart = types.InlineKeyboardButton(text='В корзину🛒', callback_data='to_cart')
+    # Алгоритм изменения кол-ва
+    if plus_or_minus == 'increment':
+        if amount < stock:
+            count = types.InlineKeyboardButton(text=str(amount+1), callback_data=str(amount+1))
+    elif plus_or_minus == 'decrement':
+        if 1 < amount:
+            count = types.InlineKeyboardButton(text=str(amount-1), callback_data=str(amount-1))
+    # Добавляем кнопки в пространство
+    kb.add(minus, count, plus, back, to_cart)
+    return kb
+
+# Кнопка "Назад"
+def back_button():
+    # Создаем пространство
+    kb = types.InlineKeyboardMarkup(row_width=1)
+    # Создаем саму кнопку
+    back = types.InlineKeyboardButton(text='Назад🔙', callback_data='back')
+    # Добавляем кнопку в пространство
+    kb.add(back)
+    return kb
+
+# Кнопки корзины
+def cart_buttons():
+    # Создаем пространство
+    kb = types.InlineKeyboardMarkup(row_width=2)
+    # Создаем сами кнопки
+    clear = types.InlineKeyboardButton(text='Очистить корзину🗑️', callback_data='clear')
+    order = types.InlineKeyboardButton(text='Оформить заказ🧾', callback_data='order')
+    back = types.InlineKeyboardButton(text='Назад🔙', callback_data='back')
+    # Добавляем кнопки в пространство
+    kb.add(order, clear, back)
+    return kb
