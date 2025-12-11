@@ -6,6 +6,7 @@ import database
 bot = telebot.TeleBot('TOKEN')
 # Временные данные
 users = {}
+group_id = 12121313
 
 # Обработчик команды /start
 @bot.message_handler(commands=['start'])
@@ -85,7 +86,7 @@ def choose_pr_count(call):
                          reply_markup=buttons.main_menu(database.get_pr_buttons()))
 
 # Корзина
-@bot.callback_query_handler(lambda call: call.data in ['cart'])
+@bot.callback_query_handler(lambda call: call.data in ['cart', 'clear', 'order'])
 def cart_handle(call):
     user_id = call.message.chat.id
     if call.data == 'cart':
@@ -96,8 +97,45 @@ def cart_handle(call):
             for i in user_cart:
                 text += f'Товар: {i[1]}\nКоличество: {i[-1]}\n\n'
                 total += database.get_pr_price(i[1]) * i[-1]
+            text += f'Итого: {total} сум'
             bot.delete_message(chat_id=user_id, message_id=call.message.message_id)
             bot.send_message(user_id, text, reply_markup=buttons.cart_buttons())
+    elif call.data == 'clear':
+        database.del_from_cart(user_id)
+        bot.delete_message(chat_id=user_id, message_id=call.message.message_id)
+        bot.send_message(user_id, 'Выберите пункт меню:',
+                         reply_markup=buttons.main_menu(database.get_pr_buttons()))
+    elif call.data == 'order':
+        text = (f'Новый заказ!\n'
+                f'Пользователь: @{call.message.chat.username}\n\n')
+        total = 0
+        user_cart = database.show_cart(user_id)
+        if user_cart:
+            for i in user_cart:
+                text += f'Товар: {i[1]}\nКоличество: {i[-1]}\n\n'
+                total += database.get_pr_price(i[1]) * i[-1]
+            text += f'Итого: {total} сум'
+            bot.delete_message(chat_id=user_id, message_id=call.message.message_id)
+            bot.send_message(user_id, 'Для оформления заказа, отправьте локацию доставки',
+                             reply_markup=buttons.loc_button())
+            # Переход на этап получения локации
+            bot.register_next_step_handler(call.message, get_loc, text)
+
+# Этап выбора локации
+def get_loc(message, text):
+    user_id = message.from_user.id
+    if message.location:
+        bot.send_message(group_id, text)
+        bot.send_location(group_id, latitude=message.location.latitude,
+                          longitude=message.location.longitude)
+        database.make_order(user_id)
+        bot.send_message(user_id, 'Заказ успешно оформлен! С вами скоро свяжутся',
+                         reply_markup=telebot.types.ReplyKeyboardRemove())
+        start(message)
+    else:
+        bot.send_message(user_id, 'Отправьте локацию по кнопке!')
+        # Возвращение на этап получения локации
+        bot.register_next_step_handler(message, get_loc, text)
 
 # Выбор продукта
 @bot.callback_query_handler(lambda call: int(call.data) in [i[0] for i in database.get_all_pr()])
